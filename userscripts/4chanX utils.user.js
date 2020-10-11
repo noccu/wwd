@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4chanX thread utils
 // @namespace    https://github.com/noccu
-// @version      1.2
+// @version      1.2.1
 // @description  Bump limit notify, post marker, signup enabler, custom text highlighting.
 // @author       noccu
 // @match        https://boards.4chan.org/*/thread/*
@@ -28,6 +28,7 @@
     const LIST = {};
     var postCount;
     var markedPosts,
+        lastMarked,
         listUI,
         scriptSettings;
     
@@ -156,7 +157,8 @@
 
         data[threadId] = {
             date: Date.now(),
-            posts: LIST
+            posts: LIST,
+            lastMarked
         }
         localStorage.setItem("markedPosts", JSON.stringify(data));
     }
@@ -165,11 +167,13 @@
         if (data) { data = JSON.parse(data) }
         else { return }
 
-        if (data[threadId]) {
+        let thread = data[threadId];
+        if (thread) {
             createList();
-            let posts = data[threadId].posts;
+            lastMarked = thread.lastMarked || 0;
+            let posts = thread.posts;
             for (let postId in posts) {
-                markPost(posts[postId], postId);
+                markPost(posts[postId], postId, true);
             }
         }
     }
@@ -188,7 +192,7 @@
         post.markBtnAdded = true;
         return btn;
     }
-    function markPost (blurb, id) {
+    function markPost (blurb, id, load) {
         if (!listUI) createList();
         if (listUI.hidden) listUI.hidden = false;
         let entry = document.createElement("div");
@@ -208,12 +212,17 @@
         entry.appendChild(unmark);
         markedPosts.appendChild(entry);
         LIST[id] = blurb;
-        saveList();
+        if (!load) {
+            id = parseInt(id);
+            if (id > lastMarked) lastMarked = id;
+            saveList();
+        }
     }
     function listen (ev) {
         if ((ev.target.isMarkButton || ev.target.className == "pm-mark")) {
             let id = ev.target.postID || ev.target.parentElement.firstElementChild.name;
             if (!LIST[id]) {
+                if (ev.autoAdd && parseInt(id) <= lastMarked) return;
                 let m = document.getElementById(`m${id}`);
                 markPost(m.textContent.slice(0,40), id);
             }
@@ -245,10 +254,10 @@
                 margin: 0.3em;
             }
             .markSignup .post {
-                border-left: ${signupBorder};
+                border-left: ${signupBorder} !important;
             }
             .markHighlight .post {
-                border-left: ${highlightBorder};
+                border-left: ${highlightBorder} !important;
             }
             #xUtils-settings {
                 position: fixed;
@@ -280,7 +289,7 @@
                             let data = getThreadData();
                             if (cgfNotify) notify(`Signup in ${data.thread}!`, post);
                             node.classList.add("markSignup");
-                            if (autoMarkSignups && markBtn) listen({target: markBtn});
+                            if (autoMarkSignups && markBtn) listen({target: markBtn, autoAdd: true});
                         }
 
                         //Check for custom highlights
