@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4chanX thread utils
 // @namespace    https://github.com/noccu
-// @version      1.2.1
+// @version      1.2.2
 // @description  Bump limit notify, post marker, signup enabler, custom text highlighting.
 // @author       noccu
 // @match        https://boards.4chan.org/*/thread/*
@@ -26,7 +26,8 @@
     //Global
     const threadId = location.pathname.match(/\/(\d+)/)[1];
     const LIST = {};
-    var postCount;
+    var postCount,
+        threadEnded = false;
     var markedPosts,
         lastMarked,
         listUI,
@@ -106,10 +107,10 @@
         if (!postCount) {
             postCount = document.getElementById("post-count");
         }
-        if (parseInt(postCount.textContent) > 500) {
+        if (!threadEnded && parseInt(postCount.textContent) > 500) {
             let data = getThreadData();
             notify("Thread has reached bump limit!", `${data.thread} on ${data.board}\nNew posts: ${data.newPosts || 0}`);
-            clearInterval(iv);
+            threadEnded = true;
         }
     }
 
