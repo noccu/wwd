@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4chanX thread utils
 // @namespace    https://github.com/noccu
-// @version      1.2.2
+// @version      1.3
 // @description  Bump limit notify, post marker, signup enabler, custom text highlighting.
 // @author       noccu
 // @match        https://boards.4chan.org/*/thread/*
@@ -22,6 +22,7 @@
     const highlightBorder = "6px solid #63a21b";
     const defaultNotifyState = false;
     var autoMarkSignups = true;
+    var autoMarkOwnImagePosts = true;
 
     //Global
     const threadId = location.pathname.match(/\/(\d+)/)[1];
@@ -54,8 +55,10 @@
             scriptSettings.innerHTML = `
                 <input type="checkbox" id="xUtils-autoSignup" style="margin-left: 0;">
                 <label for="xUtils-autoSignup">Auto mark signups</label>
-                <div>Signup regex: <textarea id="xUtils-re-signup" style="width: 40em; height: 10em;"></textarea></div>
-                <div>Highlight regex: <textarea id="xUtils-re-signup" style="width: 40em; height: 3em;"></textarea></div>
+                <input type="checkbox" id="xUtils-autoOwnImg" style="margin-left: 0;">
+                <label for="xUtils-autoOwnImg">Auto mark own image posts</label>
+                <div id="xUtils-re-signup">Signup regex: <textarea style="width: 40em; height: 10em;"></textarea></div>
+                <div id="xUtils-re-highlight">Highlight regex: <textarea style="width: 40em; height: 3em;"></textarea></div>
                 <button data-save="x">Save</button>
                 <button data-cancel="x">Cancel</button>
             `;
@@ -74,18 +77,20 @@
     }
     function saveSettings() {
         let data = {
-            autoMarkSignups: scriptSettings.children[0].checked,
-            signupRe: scriptSettings.children[2].firstElementChild.value,
-            highlightRe: scriptSettings.children[3].firstElementChild.value
+            autoMarkSignups: scriptSettings.children.namedItem("xUtils-autoSignup").checked,
+            autoMarkOwnImagePosts: scriptSettings.children.namedItem("xUtils-autoOwnImg").checked,
+            signupRe: scriptSettings.children.namedItem("xUtils-re-signup").firstElementChild.value,
+            highlightRe: scriptSettings.children.namedItem("xUtils-re-highlight").firstElementChild.value
         };
         setSettings(data);
         localStorage.setItem("xUtils", JSON.stringify(data));
     }
     function loadSettings(e) {
         if (e) {
-            e.children[0].checked = autoMarkSignups;
-            if (signupMatch) e.children[2].firstElementChild.value = signupMatch.source;
-            if (postHighlight) e.children[3].firstElementChild.value = postHighlight.source;
+            e.children.namedItem("xUtils-autoSignup").checked = autoMarkSignups;
+            e.children.namedItem("xUtils-autoOwnImg").checked = autoMarkOwnImagePosts;
+            if (signupMatch) e.children.namedItem("xUtils-re-signup").firstElementChild.value = signupMatch.source;
+            if (postHighlight) e.children.namedItem("xUtils-re-highlight").firstElementChild.value = postHighlight.source;
         }
         
         else {
@@ -97,7 +102,8 @@
         }
     }
     function setSettings(options) {
-        autoMarkSignups = options.autoMarkSignups;
+        autoMarkSignups = options.autoMarkSignups || autoMarkSignups;
+        autoMarkOwnImagePosts = options.autoMarkOwnImagePosts || autoMarkOwnImagePosts;
         signupMatch = options.signupRe ? new RegExp(options.signupRe, "im") : undefined;
         postHighlight = options.highlightRe ? new RegExp(options.highlightRe, "im") : undefined;
     }
@@ -283,7 +289,12 @@
                         markBtn = addMarkButton(node);
                     }
 
-                    if (!node.classList.contains("yourPost")) {
+                    if (node.classList.contains("yourPost")) {
+                        if (autoMarkOwnImagePosts && Array.prototype.some.call(node.children, c => c.className == "file")) {
+                            listen({target: markBtn, autoAdd: true});
+                        }
+                    }
+                    else { // Ignore your own posts
                         //Check if it's a signup and notify accordingly.
                         let post = node.getElementsByClassName("postMessage")[0].textContent;
                         if (signupMatch && signupMatch.test(post)) {
