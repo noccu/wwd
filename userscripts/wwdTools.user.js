@@ -51,14 +51,14 @@
         }
         else {
             scriptSettings = document.createElement("div");
-            scriptSettings.id = "xUtils-settings";
+            scriptSettings.id = "wwdTools-settings";
             scriptSettings.innerHTML = `
-                <input type="checkbox" id="xUtils-autoSignup" style="margin-left: 0;">
-                <label for="xUtils-autoSignup">Auto mark signups</label>
-                <input type="checkbox" id="xUtils-autoOwnImg" style="margin-left: 0;">
-                <label for="xUtils-autoOwnImg">Auto mark own image posts</label>
-                <div id="xUtils-re-signup">Signup regex: <textarea style="width: 40em; height: 10em;"></textarea></div>
-                <div id="xUtils-re-highlight">Highlight regex: <textarea style="width: 40em; height: 3em;"></textarea></div>
+                <input type="checkbox" id="wwdTools-autoSignup" style="margin-left: 0;">
+                <label for="wwdTools-autoSignup">Auto mark signups</label>
+                <input type="checkbox" id="wwdTools-autoOwnImg" style="margin-left: 0;">
+                <label for="wwdTools-autoOwnImg">Auto mark own image posts</label>
+                <div id="wwdTools-re-signup">Signup regex: <textarea style="width: 40em; height: 10em;"></textarea></div>
+                <div id="wwdTools-re-highlight">Highlight regex: <textarea style="width: 40em; height: 3em;"></textarea></div>
                 <button data-save="x">Save</button>
                 <button data-cancel="x">Cancel</button>
             `;
@@ -77,24 +77,28 @@
     }
     function saveSettings() {
         let data = {
-            autoMarkSignups: scriptSettings.children.namedItem("xUtils-autoSignup").checked,
-            autoMarkOwnImagePosts: scriptSettings.children.namedItem("xUtils-autoOwnImg").checked,
-            signupRe: scriptSettings.children.namedItem("xUtils-re-signup").firstElementChild.value,
-            highlightRe: scriptSettings.children.namedItem("xUtils-re-highlight").firstElementChild.value
+            autoMarkSignups: scriptSettings.children.namedItem("wwdTools-autoSignup").checked,
+            autoMarkOwnImagePosts: scriptSettings.children.namedItem("wwdTools-autoOwnImg").checked,
+            signupRe: scriptSettings.children.namedItem("wwdTools-re-signup").firstElementChild.value,
+            highlightRe: scriptSettings.children.namedItem("wwdTools-re-highlight").firstElementChild.value
+        };
+        if (!data) {
+            console.error("Aborting save: no data");
+            return
         };
         setSettings(data);
-        localStorage.setItem("xUtils", JSON.stringify(data));
+        localStorage.setItem("wwdTools", JSON.stringify(data));
     }
     function loadSettings(e) {
         if (e) {
-            e.children.namedItem("xUtils-autoSignup").checked = autoMarkSignups;
-            e.children.namedItem("xUtils-autoOwnImg").checked = autoMarkOwnImagePosts;
-            if (signupMatch) e.children.namedItem("xUtils-re-signup").firstElementChild.value = signupMatch.source;
-            if (postHighlight) e.children.namedItem("xUtils-re-highlight").firstElementChild.value = postHighlight.source;
+            e.children.namedItem("wwdTools-autoSignup").checked = autoMarkSignups;
+            e.children.namedItem("wwdTools-autoOwnImg").checked = autoMarkOwnImagePosts;
+            if (signupMatch) e.children.namedItem("wwdTools-re-signup").firstElementChild.value = signupMatch.source;
+            if (postHighlight) e.children.namedItem("wwdTools-re-highlight").firstElementChild.value = postHighlight.source;
         }
         
         else {
-            let cfg = localStorage.getItem("xUtils");
+            let cfg = localStorage.getItem("wwdTools");
             if (cfg) {
                 cfg = JSON.parse(cfg);
                 setSettings(cfg);
@@ -266,7 +270,7 @@
             .markHighlight .post {
                 border-left: ${highlightBorder} !important;
             }
-            #xUtils-settings {
+            #wwdTools-settings {
                 position: fixed;
                 top: 50%;
                 left: 50%;
@@ -323,14 +327,14 @@
     loadList();
     loadSettings();
     //export for testing.
-    window.xUtilsCheckThread = function (notify = defaultNotifyState) {
+    window.wwdToolsCheckThread = function (notify = defaultNotifyState) {
         let t = document.getElementsByClassName("thread")[0];
         if (t) {
             handlePosts([{addedNodes: t.children}], notify);
         }
         return t;
     }
-    let t = xUtilsCheckThread();
+    let t = wwdToolsCheckThread();
     if (t) {
         t.addEventListener("click", listen);
         let OBSERVER = new MutationObserver(handlePosts);
