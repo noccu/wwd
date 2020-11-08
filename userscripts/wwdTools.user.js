@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4chanX thread utils
 // @namespace    https://github.com/noccu
-// @version      1.3
+// @version      1.4.1
 // @description  Bump limit notify, post marker, signup enabler, custom text highlighting.
 // @author       noccu
 // @match        https://boards.4chan.org/*/thread/*
@@ -16,9 +16,9 @@
     GM_registerMenuCommand("Settings", settingsDialog);
     var signupMatch; //A regexp to notify when matched.
     var postHighlight; //Add custom highlight regexp.
-    // const signupColor = "#c6afc1";
+    const signupColor = "#1a68e9";
     const signupBorder = "6px solid #1a68e9";
-    // const highlightcolor = "#c6afc1";
+    const highlightcolor = "#63a21b";
     const highlightBorder = "6px solid #63a21b";
     const defaultNotifyState = false;
     var autoMarkSignups = true;
@@ -270,6 +270,12 @@
             .markHighlight .post {
                 border-left: ${highlightBorder} !important;
             }
+            .markSignup .hlTxt {
+                color: ${signupColor};
+            }
+            .markHighlight .hlTxt {
+                color: ${highlightcolor};
+            }
             #wwdTools-settings {
                 position: fixed;
                 top: 50%;
@@ -300,21 +306,25 @@
                     }
                     else { // Ignore your own posts
                         //Check if it's a signup and notify accordingly.
-                        let post = node.getElementsByClassName("postMessage")[0].textContent;
-                        if (signupMatch && signupMatch.test(post)) {
+                        let post = node.getElementsByClassName("postMessage")[0],
+                            postTxt = post.innerText,
+                            match;
+                        if (signupMatch && (match = postTxt.match(signupMatch))) {
                             let data = getThreadData();
-                            if (cgfNotify) notify(`Signup in ${data.thread}!`, post);
+                            if (cgfNotify) notify(`Signup in ${data.thread}!`, postTxt);
                             node.classList.add("markSignup");
+                            post.innerHTML = post.innerHTML.replace(match, `<span class="hlTxt">${match}</span>`);
                             if (autoMarkSignups && markBtn) listen({target: markBtn, autoAdd: true});
                         }
 
                         //Check for custom highlights
                         else if (postHighlight){
-                            let match = post.match(postHighlight);
+                            match = postTxt.match(postHighlight);
                             if (match) {
                                 let data = getThreadData();
-                                if (cgfNotify) notify(`${match[0]} mentioned in ${data.thread}!`, post.textContent);
+                                if (cgfNotify) notify(`${match[0]} mentioned in ${data.thread}!`, postTxt.textContent);
                                 node.classList.add("markHighlight");
+                                post.innerHTML = post.innerHTML.replace(match, `<span class="hlTxt">${match[0]}</span>`);
                             }
                         }
                     }
