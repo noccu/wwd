@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4chanX thread utils
 // @namespace    https://github.com/noccu
-// @version      1.4.1
+// @version      1.4.2
 // @description  Bump limit notify, post marker, signup enabler, custom text highlighting.
 // @author       noccu
 // @match        https://boards.4chan.org/*/thread/*
@@ -300,7 +300,7 @@
                     }
 
                     if (node.classList.contains("yourPost")) {
-                        if (autoMarkOwnImagePosts && Array.prototype.some.call(node.children, c => c.className == "file")) {
+                        if (autoMarkOwnImagePosts && node.querySelector(".file")) {
                             listen({target: markBtn, autoAdd: true});
                         }
                     }
